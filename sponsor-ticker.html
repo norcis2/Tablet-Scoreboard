@@ -1,11 +1,11 @@
 <!doctype html>
 <html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Squash Sponsor Ticker — Continuous</title>
+<title>Squash Sponsor Ticker — Continuous v4</title>
 <style>
 *{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent!important;font-family:Arial,Helvetica,sans-serif}
 #bar{position:absolute;left:0;right:0;bottom:0;height:var(--height,78px);display:flex;align-items:center;overflow:hidden;background:rgba(9,24,45,var(--opacity,.78));border-top:2px solid rgba(229,35,69,.8);box-shadow:0 -2px 12px rgba(0,0,0,.22)}
 #bar[hidden]{display:none!important}#ticker{display:flex;align-items:center;width:max-content;white-space:nowrap;will-change:transform;transform:translate3d(100vw,0,0)}
-.group{display:flex;align-items:center;flex:none;gap:46px;padding-right:46px}.sponsor{display:flex;align-items:center;justify-content:center;flex:none;width:190px;height:calc(var(--height,78px) - 16px);padding:3px 8px;background:rgba(255,255,255,.95);border-radius:7px;color:#14243b;font-weight:800;font-size:21px;overflow:hidden}.sponsor.general{width:250px}.sponsor img{display:block;max-width:100%;max-height:100%;object-fit:contain}.sponsor span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.group{display:flex;align-items:center;flex:none;gap:18px;padding-right:18px}.sponsor{display:flex;align-items:center;justify-content:center;flex:none;width:190px;height:calc(var(--height,78px) - 16px);padding:3px 8px;background:rgba(255,255,255,.95);border-radius:7px;color:#14243b;font-weight:800;font-size:21px;overflow:hidden}.sponsor.general{width:250px}.sponsor img{display:block;max-width:100%;max-height:100%;object-fit:contain}.sponsor span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 </style></head><body><div id="bar" hidden><div id="ticker"></div></div>
 <script>
 'use strict';
@@ -24,9 +24,9 @@ function group(){const el=document.createElement('div');el.className='group';for
 const first=group();ticker.appendChild(first);bar.hidden=false;
 cycleWidth=first.getBoundingClientRect().width;
 if(!cycleWidth){bar.hidden=true;return}
-const copies=Math.max(3,Math.ceil(window.innerWidth/cycleWidth)+3);for(let i=1;i<copies;i++)ticker.appendChild(group());
-// First logo starts beyond the right edge; after the first cycle the repeated groups align seamlessly.
-offset=window.innerWidth;ticker.style.transform='translate3d('+offset+'px,0,0)';frameId=requestAnimationFrame(animate)
+const copies=Math.max(4,Math.ceil(window.innerWidth/cycleWidth)+4);for(let i=1;i<copies;i++)ticker.appendChild(group());
+// Start filled immediately; repeated identical groups make wrapping seamless.
+offset=0;ticker.style.transform='translate3d('+offset+'px,0,0)';frameId=requestAnimationFrame(animate)
 }
 async function load(){if(disabled){stop();bar.hidden=true;return}try{const r=await fetch('overlay-sponsors.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);draw(await r.json())}catch(e){console.warn('Sponsor ticker:',e);stop();bar.hidden=true}}
 load();setInterval(load,60000);window.addEventListener('resize',()=>{signature='';load()});document.addEventListener('visibilitychange',()=>{lastFrame=0});
