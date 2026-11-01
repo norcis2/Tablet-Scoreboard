@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#0c1627"><title>Court scoreboard v15</title>
+<style>
+:root{font-family:Arial,Helvetica,sans-serif;color:#fff;background:#071426}*{box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden}body{margin:0;background:#071426}main{width:100%;height:100dvh;min-height:0;overflow:hidden;display:flex;flex-direction:column;padding:clamp(14px,2vw,30px);gap:clamp(12px,2vh,25px)}
+header{display:flex;align-items:center;justify-content:space-between;gap:15px;font-size:clamp(19px,2.4vw,36px);font-weight:750}.rule{height:3px;background:linear-gradient(to right,#ee0039 40%,#aebbd0 40%)}
+.mode{display:none}.sub{display:none}.content{flex:1;min-height:0;display:flex;flex-direction:column;justify-content:center;gap:clamp(8px,1.5vh,16px)}
+.player{display:grid;grid-template-columns:minmax(0,44%) minmax(100px,14%) minmax(0,33%) minmax(76px,9%);background:#f5f7fa;color:#081528;border-radius:15px;overflow:hidden;min-height:0;flex:1;border-left:clamp(8px,1.2vw,18px) solid #aeb9ca}
+.player.serving{border-left-color:#ef0039}.identity{min-width:0;display:flex;flex-direction:column;justify-content:center;padding:clamp(12px,2.3vw,36px)}.flag-above{height:29px;display:flex;align-items:center;gap:8px;margin-bottom:5px}.flag-icon{width:36px;height:24px;object-fit:cover;border:1px solid #d1d7df;border-radius:2px;display:block}.flag-code{font-size:13px;font-weight:800;color:#465a76;letter-spacing:.07em;display:none}.flag-above.fallback .flag-code{display:inline}.player-label{color:#465a76;font-size:clamp(14px,1.5vw,22px);font-weight:800;margin-bottom:clamp(5px,1.3vh,14px)}.name{font-size:clamp(24px,3.7vw,64px);font-weight:900;line-height:1.06;overflow-wrap:anywhere}.country{font-size:clamp(11px,1vw,16px);color:#718096;margin-top:8px}.serve{color:#ed003a;font-size:.6em;margin-left:9px;vertical-align:middle}
+.point-block{border-left:1px solid #dbe1e9;border-right:1px solid #dbe1e9;display:flex;align-items:center;justify-content:center;font-size:clamp(75px,11vw,190px);font-weight:900;line-height:1;font-variant-numeric:tabular-nums}.serving .point-block{background:#ed0039;color:#fff}
+.games-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center;padding:clamp(5px,1vw,18px) clamp(3px,.7vw,12px)}.game-cell{text-align:center;border-right:1px solid #d8e0ea;min-width:0}.game-cell:last-child{border-right:0}.game-label{font-weight:800;color:#536783;font-size:clamp(12px,1.35vw,21px);margin-bottom:12px}.game-number{font-weight:900;font-size:clamp(24px,3.2vw,55px);font-variant-numeric:tabular-nums}.game-number.won{background:#ffdbe2;border-radius:7px;display:inline-block;padding:4px 5px}
+.won-games{border-left:1px solid #dbe1e9;display:flex;flex-direction:column;align-items:center;justify-content:center}.won-label{font-weight:800;color:#526681;font-size:clamp(11px,1.2vw,19px)}.won-number{font-size:clamp(60px,8vw,140px);font-weight:900;line-height:1.2;font-variant-numeric:tabular-nums}
+.next .point-block,.next .games-grid,.next .won-games{opacity:.35}.center{text-align:center;color:#ef5476;font-weight:800;font-size:26px}.message{text-align:center;font-size:clamp(35px,7vw,90px);font-weight:900}.smallmsg{text-align:center;color:#b8c7d9;font-size:clamp(18px,2.6vw,34px)}
+footer{text-align:center;color:#b7c3d5;font-size:clamp(12px,1vw,17px);display:flex;justify-content:center;align-items:center;gap:5px;padding:5px}.rankedin-logo{height:1.05em;width:auto;max-width:110px;object-fit:contain;vertical-align:middle}.rankedin-text{font-weight:700}.status{position:fixed;bottom:5px;right:8px;font-size:11px;color:#ffb3b3}.debug{position:fixed;top:0;left:0;right:0;max-height:40vh;overflow:auto;background:#101010;color:#afa;font:12px monospace;padding:12px;z-index:10;white-space:pre-wrap;display:none}body.debug-on .debug{display:block}
+@media(max-width:850px){.player{grid-template-columns:minmax(0,39%) minmax(72px,17%) minmax(0,33%) minmax(55px,11%)}.identity{padding:12px}.name{font-size:clamp(19px,3.6vw,34px)}.point-block{font-size:clamp(55px,10vw,105px)}.game-label{margin-bottom:6px}.game-number{font-size:clamp(17px,3vw,30px)}.won-number{font-size:clamp(42px,7vw,76px)}}
+@media(max-width:520px){main{padding:8px}.player{min-height:0;grid-template-columns:minmax(0,40%) minmax(65px,18%) minmax(0,31%) minmax(45px,11%)}.name{font-size:clamp(17px,4.2vw,25px)}.game-label{font-size:9px}.game-number{font-size:17px}.won-label{font-size:9px}.won-number{font-size:39px}}
+
+header{min-height:clamp(54px,8vh,94px)}
+.brand-header{display:flex;align-items:center;gap:clamp(10px,1.5vw,22px);min-width:0;flex:1}
+#tournament{font-size:clamp(19px,2.5vw,39px);font-weight:850;line-height:1.1;overflow-wrap:anywhere}
+#court{font-size:clamp(15px,1.8vw,28px);white-space:nowrap;text-align:right}
+.organizers{display:flex;align-items:center;gap:8px;flex-shrink:0}
+.organizers:empty{display:none}
+.organizer-logo{height:clamp(38px,6.2vh,70px);max-width:clamp(60px,8vw,125px);object-fit:contain}
+.sponsor-section{height:clamp(52px,12dvh,135px);flex-shrink:0}
+.sponsor-section[hidden]{display:none}
+.sponsor-display{height:100%;display:flex;align-items:stretch;gap:clamp(8px,1.2vw,18px)}
+.sponsor-tile{background:#f5f7fa;border-radius:12px;flex:1;min-width:0;display:flex;align-items:center;justify-content:center;padding:clamp(7px,1.2vw,15px);overflow:hidden}
+.sponsor-tile img{display:block;width:100%;height:100%;max-height:100%;object-fit:contain}
+.sponsor-tile.general{flex:1.15}
+.sponsor-tile.general-only{flex:1}
+.sponsor-tile.sponsor-missing{color:#10233e;font-weight:700;font-size:clamp(14px,2vw,26px)}
+footer{justify-content:flex-end;text-align:right;margin-top:auto;padding:0 4px;font-size:clamp(11px,1vw,15px)}
+main:has(.sponsor-section:not([hidden])) .player{min-height:0}
+@media(max-width:850px){.organizer-logo{height:42px;max-width:65px}.sponsor-section{height:clamp(45px,11dvh,80px)}.brand-header{gap:8px}#tournament{font-size:clamp(16px,2.7vw,25px)}#court{font-size:clamp(12px,1.8vw,18px)}main:has(.sponsor-section:not([hidden])) .player{min-height:0}}
+@media(max-height:650px){main{padding:8px 14px;gap:5px}header{min-height:35px}.organizer-logo{height:32px}.flag-above{height:20px;margin-bottom:1px}.flag-icon{width:28px;height:18px}.identity{padding:6px 12px}.name{font-size:clamp(17px,3vw,38px)}.point-block{font-size:clamp(42px,8vw,105px)}.game-label{margin-bottom:3px}.game-number{font-size:clamp(16px,2.5vw,35px)}.won-number{font-size:clamp(35px,6vw,80px)}.sponsor-section{height:clamp(45px,12dvh,80px)}footer{font-size:11px}}
+@media(orientation:portrait){main{gap:8px}.player{grid-template-columns:minmax(0,39%) minmax(60px,19%) minmax(0,31%) minmax(40px,11%)}.name{font-size:clamp(16px,3.7vw,35px)}.point-block{font-size:clamp(42px,9vw,110px)}.game-label{font-size:clamp(8px,1.6vw,15px)}.game-number{font-size:clamp(14px,2.6vw,30px)}.won-number{font-size:clamp(32px,7vw,80px)}}
+</style></head><body><main><header><div class="brand-header"><div id="organizers" class="organizers"></div><span id="tournament">SQUASH TOURNAMENT</span></div><span id="court">COURT 1</span></header><div class="rule"></div><div id="mode" class="mode"></div><div id="sub" class="sub"></div><section id="content" class="content"><div class="message">Connecting…</div></section><section id="sponsor-section" class="sponsor-section" hidden><div id="sponsor-display" class="sponsor-display"></div></section><footer>Powered by <img class="rankedin-logo" src="rankedin-logo.png" alt="Rankedin" onerror="this.style.display='none';document.getElementById('rankedin-text').style.display='inline'"><span id="rankedin-text" class="rankedin-text" style="display:none">Rankedin</span></footer></main><div id="status" class="status"></div><pre id="debug" class="debug"></pre>
+<script>
+'use strict';
+const q=new URLSearchParams(location.search);
+const COURT=q.get('court')||'1',FINAL_MS=60000;
+let apiConfig={apiBaseUrl:'https://live.rankedin.com/api/v1',refreshSeconds:5,courts:{'1':192806,'2':null,'3':null,'4':null,'5':null,'6':null,'7':null}};
+let REFRESH=5000,rankedinId=null,configReady=false;
+function resolveCourt(){
+ const courts=apiConfig.courts||{};
+ const configured=Object.prototype.hasOwnProperty.call(courts,COURT)?courts[COURT]:null;
+ // Numeric court parameters 1–7 always refer to local court slots, not Rankedin IDs.
+ rankedinId=(configured===null||configured===undefined||configured==='')?null:String(configured);
+ const override=Number(q.get('refresh'));
+ REFRESH=Math.max(2,Math.min(120,Number.isFinite(override)&&override>0?override:Number(apiConfig.refreshSeconds)||5))*1000;
+}
+async function loadApiConfig(){
+ try{
+  const response=await fetch('api-config.json?t='+Date.now(),{cache:'no-store'});
+  if(!response.ok)throw Error('HTTP '+response.status);
+  const config=await response.json();
+  if(!config||typeof config!=='object'||!config.courts||typeof config.courts!=='object')throw Error('Invalid api-config.json');
+  apiConfig=config;
+  resolveCourt();configReady=true;
+  if(!rankedinId){latest=null;heading('');$('content').innerHTML='<div class="message">COURT '+esc(COURT)+'</div><div class="smallmsg">NOT CONFIGURED</div>';$('status').textContent='';}
+ }catch(e){
+  configReady=true;resolveCourt();
+  $('status').textContent='Configuration: '+e.message;
+ }
+}
+
+const $=id=>document.getElementById(id);
+
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const asArray=x=>Array.isArray(x)?x:x?[x]:[];
+function name(x){return asArray(x).map(p=>typeof p==='string'?p:[p?.firstName,p?.middleName,p?.lastName].filter(Boolean).join(' ')||p?.name||p?.fullName||'').filter(Boolean).join(' / ')||'TBA'}
+function country(x){return String(asArray(x)[0]?.countryCode||'').toUpperCase()}
+function flag(x){
+ const c=String(asArray(x)[0]?.countryCode||'').trim().toUpperCase();
+ if(!/^[A-Z]{2}$/.test(c))return '';
+ // SVG is embedded directly in the page: no external server, font or emoji required.
+ const rect=(color,y,h)=>`<rect y="${y}" width="48" height="${h}" fill="${color}"/>`;
+ const horizontal=(colors)=>colors.map((v,i)=>rect(v,i*32/colors.length,32/colors.length)).join('');
+ const cross=(base,border,inside)=>`<rect width="48" height="32" fill="${base}"/><rect x="14" width="9" height="32" fill="${border}"/><rect y="12" width="48" height="9" fill="${border}"/><rect x="17" width="3" height="32" fill="${inside}"/><rect y="15" width="48" height="3" fill="${inside}"/>`;
+ const designs={
+  LV:'<rect width="48" height="32" fill="#9e1b34"/><rect y="12.8" width="48" height="6.4" fill="#fff"/>',
+  LT:horizontal(['#fdb913','#006a44','#c1272d']),
+  EE:horizontal(['#4891d9','#171717','#fff']),
+  DE:horizontal(['#000','#dd0000','#ffce00']),
+  NL:horizontal(['#ae1c28','#fff','#21468b']),
+  FR:'<rect width="16" height="32" fill="#002395"/><rect x="16" width="16" height="32" fill="#fff"/><rect x="32" width="16" height="32" fill="#ed2939"/>',
+  IT:'<rect width="16" height="32" fill="#009246"/><rect x="16" width="16" height="32" fill="#fff"/><rect x="32" width="16" height="32" fill="#ce2b37"/>',
+  PL:horizontal(['#fff','#dc143c']),
+  UA:horizontal(['#0057b7','#ffd700']),
+  AT:horizontal(['#ed2939','#fff','#ed2939']),
+  HU:horizontal(['#ce2939','#fff','#477050']),
+  RU:horizontal(['#fff','#0039a6','#d52b1e']),
+  FI:cross('#fff','#003580','#003580'),
+  SE:cross('#006aa7','#fecc00','#fecc00'),
+  NO:cross('#ba0c2f','#fff','#00205b'),
+  DK:cross('#c8102e','#fff','#fff'),
+  CH:'<rect width="48" height="32" fill="#da291c"/><path d="M20 5h8v7h8v8h-8v7h-8v-7h-8v-8h8z" fill="#fff"/>',
+  JP:'<rect width="48" height="32" fill="#fff"/><circle cx="24" cy="16" r="9" fill="#bc002d"/>',
+  BE:'<rect width="16" height="32"/><rect x="16" width="16" height="32" fill="#fae042"/><rect x="32" width="16" height="32" fill="#ed2939"/>',
+  IE:'<rect width="16" height="32" fill="#169b62"/><rect x="16" width="16" height="32" fill="#fff"/><rect x="32" width="16" height="32" fill="#ff883e"/>'
+ };
+ const svg=designs[c];
+ const svgDocument=svg?`<svg xmlns="http://www.w3.org/2000/svg" width="48" height="32" viewBox="0 0 48 32">${svg}</svg>`:null;
+ const url=svgDocument?'data:image/svg+xml;charset=utf-8,'+encodeURIComponent(svgDocument):`https://flagcdn.com/w80/${c.toLowerCase()}.png`;
+ const visual=`<img class="flag-icon" src="${url}" alt="" loading="eager" onerror="this.style.display='none';this.parentElement.classList.add('fallback')">`;
+ return `<div class="flag-above">${visual}<span class="flag-code">${esc(c)}</span></div>`;
+}
+
+
+// Tournament and sponsors are configured separately from the Rankedin scoring logic.
+const CONFIG_REFRESH_MS=60000;
+let tournamentConfig={tournamentName:'SQUASH TOURNAMENT',organizers:[]};
+let sponsorConfig={generalSponsor:null,partners:[],generalSeconds:10,rotationSeconds:10};
+let sponsorEpoch=Date.now(),sponsorSignature='';
+const assetPath=p=>{if(typeof p!=='string'||!p.trim())return '';try{const u=new URL(p.trim(),location.href);return ['http:','https:'].includes(u.protocol)?u.href:''}catch{return ''}};
+const normalizedSponsor=x=>typeof x==='string'?{image:x,name:''}:x&&typeof x==='object'?{image:x.image||x.logo||'',name:x.name||''}:null;
+function safeImage(path,cls,alt){
+ const src=assetPath(path);if(!src)return '';
+ const img=document.createElement('img');img.src=src;img.className=cls;img.alt=alt||'';img.loading='eager';img.onerror=()=>img.remove();return img;
+}
+function applyTournament(){
+ $('tournament').textContent=q.get('title')||tournamentConfig.tournamentName||'SQUASH TOURNAMENT';
+ const host=$('organizers');host.replaceChildren();
+ for(const org of (Array.isArray(tournamentConfig.organizers)?tournamentConfig.organizers:[]).slice(0,3)){
+  const entry=normalizedSponsor(org);if(!entry)continue;
+  const img=safeImage(entry.image,'organizer-logo',entry.name||'Organizer');
+  if(img)host.appendChild(img);
+ }
+}
+function sponsorTile(entry,isGeneral=false,alone=false){
+ const e=normalizedSponsor(entry);if(!e)return null;
+ const div=document.createElement('div');div.className='sponsor-tile'+(isGeneral?' general':'')+(alone?' general-only':'');
+ const img=safeImage(e.image,'',e.name||'Sponsor');
+ if(img){img.onerror=()=>{img.remove();if(e.name){div.textContent=e.name;div.classList.add('sponsor-missing')}};div.appendChild(img)}
+ else if(e.name){div.textContent=e.name;div.classList.add('sponsor-missing')}
+ else return null;
+ return div;
+}
+function sponsorSeconds(v){return Math.max(3,Math.min(120,Number(v)||10))*1000}
+function showSponsors(){
+ const general=normalizedSponsor(sponsorConfig.generalSponsor);
+ const partners=(Array.isArray(sponsorConfig.partners)?sponsorConfig.partners:[]).map(normalizedSponsor).filter(x=>x&&(x.image||x.name));
+ const section=$('sponsor-section'),display=$('sponsor-display');
+ if(!general&&!partners.length){section.hidden=true;display.replaceChildren();return}
+ section.hidden=false;
+ const generalMs=sponsorSeconds(sponsorConfig.generalSeconds),rotateMs=sponsorSeconds(sponsorConfig.rotationSeconds);
+ const elapsed=Math.max(0,Date.now()-sponsorEpoch);
+ let entries=[];
+ if(general){
+  if(!partners.length){entries=[{data:general,general:true,alone:true}]}
+  else{
+   const groups=Math.ceil(partners.length/3),cycle=generalMs+groups*rotateMs,at=elapsed%cycle;
+   if(at<generalMs){entries=[{data:general,general:true,alone:true}]}
+   else{const page=Math.min(groups-1,Math.floor((at-generalMs)/rotateMs));entries=[{data:general,general:true},...partners.slice(page*3,page*3+3).map(data=>({data}))]}
+  }
+ }else{
+  const groups=Math.ceil(partners.length/4),page=Math.floor(elapsed/rotateMs)%groups;
+  entries=partners.slice(page*4,page*4+4).map(data=>({data}));
+ }
+ const signature=JSON.stringify(entries);
+ if(signature===sponsorSignature)return;
+ sponsorSignature=signature;display.replaceChildren();
+ for(const e of entries){const tile=sponsorTile(e.data,e.general,e.alone);if(tile)display.appendChild(tile)}
+}
+async function loadConfigs(){
+ async function read(path){
+  const r=await fetch(path+'?t='+Date.now(),{cache:'no-store'});
+  if(!r.ok)throw Error('HTTP '+r.status);
+  return await r.json();
+ }
+ try{const t=await read('tournament.json');if(t&&typeof t==='object')tournamentConfig=t}catch(e){if(q.get('debug')==='1')console.warn('Tournament config',e)}
+ try{
+  const s=await read('sponsors.json');
+  if(s&&typeof s==='object'){
+   const signature=JSON.stringify(s);
+   if(signature!==JSON.stringify(sponsorConfig)){sponsorConfig=s;sponsorEpoch=Date.now();sponsorSignature=''}
+  }
+ }catch(e){if(q.get('debug')==='1')console.warn('Sponsor config',e)}
+ applyTournament();showSponsors();
+}
+loadConfigs();setInterval(loadConfigs,CONFIG_REFRESH_MS);setInterval(showSponsors,1000);
+
+function row(x,points,sets=[],gamesWon='–',serve=false,index=1,opponentSets=[],isNext=false){
+ const values=Array.isArray(sets)?sets:[];const theirs=Array.isArray(opponentSets)?opponentSets:[];
+ return `<div class="player ${serve?'serving':''} ${isNext?'next':''}"><div class="identity">${flag(x)}<div class="name">${esc(name(x))}${serve?'<span class="serve">▶</span>':''}</div></div><div class="point-block">${esc(points)}</div><div class="games-grid">${Array.from({length:5},(_,i)=>{const v=values[i],o=theirs[i],won=v!=null&&o!=null&&Number(v)>Number(o)&&((Number(v)>=11&&Number(v)-Number(o)>=2)||(Number(v)>11&&Number(v)-Number(o)>=2));return `<div class="game-cell"><div class="game-label">G${i+1}</div><div class="game-number ${won?'won':''}">${esc(v??'–')}</div></div>`}).join('')}</div><div class="won-games"><div class="won-label">GAMES</div><div class="won-number">${esc(gamesWon)}</div></div></div>`;
+}
+function courtLabel(raw){const c=String(raw||'').trim();if(!c)return 'COURT';const m=c.match(/^(?:CT|COURT)\s*([0-9]+)$/i);return m?'COURT '+m[1]:(/^\d+$/.test(c)?'COURT '+c:c.toUpperCase())}
+function heading(m,s=''){$('mode').textContent=m;$('sub').textContent=s;$('court').textContent=courtLabel(latest?.details?.courtName||'CT '+COURT)+(s?'  |  '+s:'')}
+let latest=null,lastLive=null,finalId=null,finalUntil=0,lastFetch=0,loading=false;
+const key='court-final-v15-'+COURT;
+try{const v=JSON.parse(sessionStorage.getItem(key)||'null');if(v?.until>Date.now()){finalId=v.id;finalUntil=v.until}}catch{}
+function draw(d){$('court').textContent=courtLabel(d.details?.courtName||'CT '+COURT);const live=d.liveMatch,prev=d.previousMatch,next=d.nextMatch,now=Date.now();
+ if(live){const base=live.base||live,st=live.state||live,sc=st.score||{},games=Array.isArray(sc.detailedResult)?sc.detailedResult:[],current=games.at(-1)||{};
+ const first=base.firstParticipant||live.firstParticipant,second=base.secondParticipant||live.secondParticipant;
+ const g1=sc.firstParticipantScore??0,g2=sc.secondParticipantScore??0;
+ const serve=st.serve?.isFirstParticipantServing;
+ heading('SCOREBOARD',`Game ${Math.min(5,Math.max(1,Number(sc.index||games.length-1)+1))} (Best of 5)`);
+ $('content').innerHTML=row(first,current.firstParticipantScore??'–',games.map(v=>v.firstParticipantScore),g1,serve===true,1,games.map(v=>v.secondParticipantScore))+row(second,current.secondParticipantScore??'–',games.map(v=>v.secondParticipantScore),g2,serve===false,2,games.map(v=>v.firstParticipantScore));
+ lastLive=String(base.matchId??st.matchId??'');finalUntil=0;finalId=null;sessionStorage.removeItem(key);return;
+ }
+ if(lastLive&&prev&&String(prev.matchId)===lastLive&&String(finalId)!==lastLive){finalId=String(prev.matchId);finalUntil=now+FINAL_MS;sessionStorage.setItem(key,JSON.stringify({id:finalId,until:finalUntil}))}
+ lastLive=null;
+ if(prev&&String(prev.matchId)===String(finalId)&&now<finalUntil){const sc=prev.score||{},games=sc.detailedResult||[];heading('FINAL RESULT',`FINAL RESULT · ${prev.className||''} · ${sc.firstParticipantScore??'–'} : ${sc.secondParticipantScore??'–'}`);$('content').innerHTML=row(prev.firstParticipant,'–',games.map(v=>v.firstParticipantScore),sc.firstParticipantScore??'–',false,1,games.map(v=>v.secondParticipantScore))+row(prev.secondParticipant,'–',games.map(v=>v.secondParticipantScore),sc.secondParticipantScore??'–',false,2,games.map(v=>v.firstParticipantScore));return}
+ if(finalUntil&&now>=finalUntil){finalUntil=0;finalId=null;sessionStorage.removeItem(key)}
+ if(next){heading('NEXT MATCH',['NEXT MATCH',next.className,typeof next.startTime==='string'?next.startTime.slice(11,16):''].filter(Boolean).join(' · '));$('content').innerHTML=row(next.firstParticipant,'–',[],'–',false,1,[],true)+row(next.secondParticipant,'–',[],'–',false,2,[],true);return}
+ heading('','');$('content').innerHTML='<div class="message">COURT AVAILABLE</div><div class="smallmsg">Waiting for the next match</div>';
+}
+function debug(d,error){if(q.get('debug')!=='1')return;document.body.classList.add('debug-on');$('debug').textContent=JSON.stringify({version:'v15',time:new Date().toISOString(),lastFetch:lastFetch?new Date(lastFetch).toISOString():null,error:error||null,liveMatch:!!d?.liveMatch,liveNames:d?.liveMatch?{first:name((d.liveMatch.base||d.liveMatch).firstParticipant),second:name((d.liveMatch.base||d.liveMatch).secondParticipant)}:null,nextMatch:!!d?.nextMatch,nextNames:d?.nextMatch?{first:name(d.nextMatch.firstParticipant),second:name(d.nextMatch.secondParticipant)}:null,raw:d},null,2)}
+const demo={details:{courtName:'CT1'},liveMatch:{base:{matchId:7016504,className:'M2',firstParticipant:[{firstName:'Ilvars',lastName:'Auseklis',countryCode:'lv'}],secondParticipant:[{firstName:'Kārlis',lastName:'Martinsons',countryCode:'lv'}]},state:{serve:{isFirstParticipantServing:false},score:{firstParticipantScore:1,secondParticipantScore:1,detailedResult:[{firstParticipantScore:11,secondParticipantScore:8},{firstParticipantScore:9,secondParticipantScore:11},{firstParticipantScore:4,secondParticipantScore:3}]}}},previousMatch:null,nextMatch:{className:'M2',startTime:'2026-11-01T14:30:00',firstParticipant:[{firstName:'Pēteris',lastName:'Grīnbergs',countryCode:'lv'}],secondParticipant:[{firstName:'Aivars',lastName:'Dziļums',countryCode:'lv'}]}};
+async function poll(){if(loading||!configReady)return;if(!rankedinId&&!q.get('demo'))return;loading=true;try{let data;if(q.get('demo')==='live'){data=demo}else if(q.get('demo')==='next'){data={...demo,liveMatch:null}}else{const base=String(apiConfig.apiBaseUrl||'https://live.rankedin.com/api/v1').replace(/\/+$/,'');const url=`${base}/court/${encodeURIComponent(rankedinId)}/scoreboard?t=${Date.now()}`;const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),10000);let res;try{res=await fetch(url,{cache:'no-store',signal:controller.signal})}finally{clearTimeout(timeout)}if(!res.ok)throw Error('HTTP '+res.status);data=await res.json()}
+ if(!data||typeof data!=='object'||!('liveMatch'in data)||!('nextMatch'in data))throw Error('Unexpected API structure');latest=data;lastFetch=Date.now();draw(data);debug(data,null);$('status').textContent=q.get('debug')==='1'?'Updated '+new Date(lastFetch).toLocaleTimeString()+' · Match '+(data.liveMatch?.base?.matchId||'none')+' · v15':'';
+ }catch(e){$('status').textContent='API error: '+e.message;debug(latest,e.message);if(!latest){heading('CONNECTION ERROR');$('content').innerHTML='<div class="smallmsg">Cannot load Rankedin data</div>'}}finally{loading=false}}
+(async()=>{await loadApiConfig();await poll();setInterval(async()=>{await loadApiConfig();},CONFIG_REFRESH_MS);})();
+let lastPollAt=0;
+setInterval(()=>{if(!configReady)return;const now=Date.now();if(now-lastPollAt>=REFRESH){lastPollAt=now;poll()}if(latest)draw(latest);if(rankedinId&&lastFetch&&now-lastFetch>REFRESH*3)$('status').textContent='Data not updated — check connection'},1000);
+</script></body></html>
