@@ -1,10 +1,6 @@
 {
   "generalSponsor": "sponsors/Squashop.jpeg",
-  "partners": [
-    "sponsors/Pepsi centrs.jpg",
-    "sponsors/Meste.jpg",
-    "sponsors/Maxima.png"
-  ],
+  "partners": [],
   "speedPixelsPerSecond": 75,
   "heightPx": 78,
   "backgroundOpacity": 0.78
