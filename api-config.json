@@ -2,7 +2,7 @@
   "apiBaseUrl": "https://live.rankedin.com/api/v1",
   "refreshSeconds": 5,
   "courts": {
-    "1": 192806,
+    "1": 195296,
     "2": null,
     "3": null,
     "4": null,
