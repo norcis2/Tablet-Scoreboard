@@ -69,7 +69,7 @@ const $=id=>document.getElementById(id);
 
 const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const asArray=x=>Array.isArray(x)?x:x?[x]:[];
-function name(x){return asArray(x).map(p=>typeof p==='string'?p:[p?.firstName,p?.middleName,p?.lastName].filter(Boolean).join(' ')||p?.name||p?.fullName||'').filter(Boolean).join(' / ')||'TBA'}
+function name(x){return asArray(x).map(p=>typeof p==='string'?p:[p?.firstName,p?.middleName,p?.lastName].filter(Boolean).join(' ')||p?.name||p?.fullName||'').filter(Boolean).join(' / ')||'To Be Announced'}
 function country(x){return String(asArray(x)[0]?.countryCode||'').toUpperCase()}
 function flag(x){
  const c=String(asArray(x)[0]?.countryCode||'').trim().toUpperCase();
