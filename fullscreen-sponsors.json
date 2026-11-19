@@ -1,10 +1,6 @@
 {
-  "generalSponsor": "sponsors/fullscreen/squashop.png",
-  "partners": [
-    "sponsors/fullscreen/pepsi.png",
-    "sponsors/fullscreen/meste.png",
-    "sponsors/fullscreen/maxima.png"
-  ],
+  "generalSponsor": "sponsors/fullscreen/Victor cup fullscreen banner.jpeg",
+  "partners": [],
   "generalSeconds": 15,
   "partnerSeconds": 10,
   "fadeSeconds": 1.2
