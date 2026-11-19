@@ -1,6 +1,6 @@
 {
   "generalSponsor": "sponsors/Squashop_1800x120.png",
-  "partners": [],
+  "partners": [sponsors/KARAKAL_1800x120.png],
   "generalSeconds": 10,
   "rotationSeconds": 10
 }
