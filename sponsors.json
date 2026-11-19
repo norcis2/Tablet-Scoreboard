@@ -1,9 +1,7 @@
 {
-  "generalSponsor": "sponsors/Squashop_1800x120.png",
-  "partners": \[
+  "generalSponsor": "sponsors/KARAKAL_1800x120.png",
+  "partners": [
     "sponsors/KARAKAL_1800x120.png",
-    "sponsors/Meste.jpg",
-    "sponsors/Maxima.png"
   ],
   "generalSeconds": 15,
   "partnerSeconds": 10,
