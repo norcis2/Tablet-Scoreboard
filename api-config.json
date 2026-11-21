@@ -2,10 +2,10 @@
   "apiBaseUrl": "https://live.rankedin.com/api/v1",
   "refreshSeconds": 5,
   "courts": {
-    "1": 196453,
-    "2": 196454,
-    "3": 196455,
-    "4": null,
+    "1": 196460,
+    "2": 196461,
+    "3": 196462,
+    "4": 196463,
     "5": null,
     "6": null,
     "7": null
