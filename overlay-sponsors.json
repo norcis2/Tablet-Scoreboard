@@ -1,7 +1,7 @@
 {
   "generalSponsor": "sponsors/Squashop_1800x120.png",
   "partners": ["sponsors/Pepsi centrs.jpeg",
-  ],
+  "sponsors/KARAKAL_1800x120.png"],
   "speedPixelsPerSecond": 75,
   "heightPx": 78
 }
