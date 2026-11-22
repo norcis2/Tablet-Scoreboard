@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Squash Sponsor Ticker — 15:1 repaired</title>
+<style>
+*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;overflow:hidden;background:transparent!important;font-family:Arial,Helvetica,sans-serif}
+#bar{position:absolute;left:0;right:0;bottom:0;height:78px;overflow:hidden;background:transparent!important;border-top:1px solid #aeb9ca;border-bottom:1px solid #aeb9ca;box-shadow:inset 0 1px 0 #071426,inset 0 -1px 0 #071426}
+#bar[hidden]{display:none!important}
+#ticker{position:absolute;inset:0;overflow:hidden}
+.sponsor{position:absolute;left:0;top:50%;display:flex;align-items:center;justify-content:center;padding:3px;background:transparent!important;border:1px solid #aeb9ca;box-shadow:inset 0 0 0 1px #071426;border-radius:3px;color:#f3f6fa;font-weight:700;font-size:18px;overflow:hidden;will-change:transform;transform:translate3d(0,-50%,0)}
+.sponsor img{display:block;width:100%;height:100%;object-fit:contain}
+.sponsor span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#message{position:absolute;inset:0;display:none;align-items:center;justify-content:center;padding:5px 12px;color:#fff;background:rgba(7,20,38,.9);font:14px Arial,sans-serif}
+#message.show{display:flex}
+</style></head><body><div id="bar" hidden><div id="ticker"></div><div id="message"></div></div>
+<script>
+'use strict';
+const q=new URLSearchParams(location.search);
+const bar=document.getElementById('bar'),ticker=document.getElementById('ticker'),message=document.getElementById('message');
+const disabled=['off','0','false','no'].includes((q.get('enabled')||'on').toLowerCase());
+const safePath=s=>typeof s==='string'&&s.trim()&&!/^\s*(?:https?:|\/\/|data:|javascript:)/i.test(s)&&!s.includes('..')?s:null;
+const entry=x=>typeof x==='string'?{image:x,name:''}:x&&typeof x==='object'?{image:x.image||x.src||'',name:x.name||''}:null;
+const GAP=3,PADDING=3;
+let signature='',speed=75,cycleWidth=1,positions=[],tiles=[],travel=0,lastFrame=0,frameId=0;
+function showMessage(s){message.textContent=s;message.classList.add('show');bar.hidden=false}
+function hideMessage(){message.classList.remove('show')}
+function tile(raw,width,height){const e=entry(raw);if(!e)return null;const div=document.createElement('div');div.className='sponsor';div.style.width=width+'px';div.style.height=height+'px';
+ const path=safePath(e.image);
+ if(path){const img=document.createElement('img');img.src=path;img.alt=e.name||'Sponsor';img.onerror=()=>{img.remove();const span=document.createElement('span');span.textContent=e.name||path.split('/').pop().replace(/\.[^.]+$/,'').replace(/[_-]+/g,' ');div.appendChild(span);console.warn('Sponsor image not found:',path)};div.appendChild(img)}
+ else{const span=document.createElement('span');span.textContent=e.name||'Sponsor';div.appendChild(span)}return div}
+function stop(){if(frameId)cancelAnimationFrame(frameId);frameId=0;lastFrame=0}
+function animate(now){if(lastFrame){const dt=Math.min((now-lastFrame)/1000,.1);travel=(travel+speed*dt)%cycleWidth}lastFrame=now;
+ for(let i=0;i<tiles.length;i++){const x=positions[i]-travel;tiles[i].style.transform='translate3d('+x.toFixed(2)+'px,-50%,0)'}frameId=requestAnimationFrame(animate)}
+function draw(c){if(disabled){stop();bar.hidden=true;return}
+ const items=[];if(c.generalSponsor)items.push(c.generalSponsor);if(Array.isArray(c.partners))items.push(...c.partners);
+ const valid=items.filter(x=>{const e=entry(x);return e&&(e.image||e.name)});
+ if(!valid.length){stop();ticker.replaceChildren();signature='';showMessage('В overlay-sponsors.json не указаны баннеры');return}
+ const height=Math.min(140,Math.max(40,Number(c.heightPx)||78));speed=Math.min(200,Math.max(15,Number(c.speedPixelsPerSecond)||75));
+ const width=height*15;
+ const sig=JSON.stringify({valid,height,speed,viewport:window.innerWidth});if(sig===signature)return;signature=sig;stop();hideMessage();
+ bar.style.height=height+'px';ticker.replaceChildren();tiles=[];positions=[];
+ const starts=[];let sum=0;for(let i=0;i<valid.length;i++){starts.push(sum);sum+=width+GAP}cycleWidth=sum;
+ // Repeated sequence covers the viewport from the first frame; all sponsor blocks have equal size.
+ const repeats=Math.ceil(window.innerWidth/cycleWidth)+2;
+ for(let repeat=-1;repeat<=repeats;repeat++){for(let j=0;j<valid.length;j++){
+ const el=tile(valid[j],width,height);if(!el)continue;ticker.appendChild(el);tiles.push(el);positions.push(repeat*cycleWidth+starts[j]);}}
+ travel=0;lastFrame=0;bar.hidden=false;frameId=requestAnimationFrame(animate);
+}
+async function load(){if(disabled){stop();bar.hidden=true;return}try{
+ const r=await fetch('overlay-sponsors.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw Error('HTTP '+r.status);
+ draw(await r.json());
+ }catch(e){console.error('Sponsor ticker:',e);if(!signature){stop();showMessage('Ошибка загрузки overlay-sponsors.json: '+e.message)}}}
+load();setInterval(load,60000);window.addEventListener('resize',()=>{signature='';load()});document.addEventListener('visibilitychange',()=>{lastFrame=0});
+</script></body></html>
