@@ -1,8 +1,6 @@
 {
-  "generalSponsor": "null",
-  "partners": [
-    "sponsors/Squashop.jpeg"
-  ],
+  "generalSponsor": "sponsors/Squashop_1800x120.png",
+  "partners": [],
   "speedPixelsPerSecond": 75,
   "heightPx": 78,
   "backgroundOpacity": 0.78
