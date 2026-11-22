@@ -1,6 +1,6 @@
 {
   "generalSponsor": "sponsors/Squashop_1800x120.png",
-  "partners": [],
+  "partners": ["sponsors/Pepsi centrs.jpeg"],
   "speedPixelsPerSecond": 75,
   "heightPx": 78
 }
