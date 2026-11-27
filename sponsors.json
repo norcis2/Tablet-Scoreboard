@@ -1,8 +1,8 @@
 {
   "generalSponsor": "sponsors/Squashop_1800x120.png",
-  "partners": [sponsors/christmas_slide_1_1800x120.png,
-  sponsors/christmas_slide_2_1800x120.png],
+  "partners": ["sponsors/christmas_slide_1_1800x120.png",
+  "sponsors/christmas_slide_2_1800x120.png"],
   "generalSeconds": 15,
-  "partnerSeconds": 10,
+  "partnerSeconds": 7,
   "fadeSeconds": 1.2
 }
