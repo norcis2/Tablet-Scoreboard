@@ -1,4 +1,8 @@
-{
+{"tournamentId": 76439,
+"groupStandings": {
+  "enabled": true,
+  "refreshSeconds": 30
+},
   "apiBaseUrl": "https://live.rankedin.com/api/v1",
   "refreshSeconds": 5,
   "courts": {
