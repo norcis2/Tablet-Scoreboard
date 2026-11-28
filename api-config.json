@@ -1,4 +1,4 @@
-{"tournamentId": 76439,
+{"tournamentId": null,
 "groupStandings": {
   "enabled": true,
   "refreshSeconds": 30
@@ -7,10 +7,10 @@
   "refreshSeconds": 5,
   "courts": {
     "1": 199577,
-    "2": 199578,
-    "3": 199579,
-    "4": 199580,
-    "5": 199581,
+    "2": null,
+    "3": null,
+    "4": null,
+    "5": null,
     "6": null,
     "7": null
  },
