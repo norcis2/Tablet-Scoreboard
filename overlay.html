@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Squash Broadcast Overlay</title>
+<style>
+:root{color-scheme:dark;font-family:Arial,Helvetica,sans-serif}*{box-sizing:border-box}html,body{margin:0;width:100%;height:100%;background:transparent!important;overflow:hidden;color:white}#wrap{position:absolute;top:2.2%;left:0;transform:none;width:min(400px,94vw);transition:width .25s ease;display:flex;flex-direction:column;gap:5px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}.glass{background:rgba(9,24,45,.77);border:1px solid rgba(255,255,255,.25);backdrop-filter:blur(6px);border-radius:9px}.head{display:flex;align-items:center;flex-wrap:nowrap;gap:12px;padding:8px 14px;min-height:48px}.org{display:flex;align-items:center;gap:7px}.org img{height:31px;max-width:75px;object-fit:contain}.event{font-size:13px;font-weight:800;letter-spacing:.035em;flex:1;min-width:0}.court{margin-left:auto;font-size:13px;font-weight:800;white-space:nowrap;color:#d7e4f4}.score{padding:6px 10px;display:flex;flex-direction:column;gap:4px}.player{display:grid;grid-template-columns:minmax(0,1fr) 52px repeat(5,25px) 43px;align-items:center;min-height:43px;gap:2px}.name{font-size:17px;font-weight:850;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-left:8px}.serving .name{border-left:4px solid #f13958;padding-left:4px}.point{background:rgba(244,248,255,.13);border-radius:5px;font-size:26px;font-weight:900;text-align:center;padding:5px 0}.serving .point{background:rgba(224,25,65,.95)}.game{text-align:center;color:#edf3fa;font-size:14px;font-weight:700}.game.won{color:#fff;background:rgba(224,25,65,.45);border-radius:4px;padding:5px 0}.games{font-size:21px;font-weight:900;text-align:center;color:#fff}.labels{display:grid;grid-template-columns:minmax(0,1fr) 52px repeat(5,25px) 43px;gap:2px;color:#b9cde5;font-size:10px;text-align:center;letter-spacing:.05em}.labels div:first-child{text-align:left;padding-left:8px}.message{text-align:center;font-weight:800;font-size:20px;padding:18px 12px}.status{font-size:10px;color:#ffe3e8;text-align:right;min-height:0}.status:empty{display:none}@media(max-width:700px){.player{grid-template-columns:minmax(0,1fr) 52px repeat(5,25px) 43px}.labels{grid-template-columns:minmax(0,1fr) 52px repeat(5,25px) 43px}.name{font-size:15px}.point{font-size:20px}.game{font-size:12px}.games{font-size:18px}.event{font-size:13px}}
+
+/* Enlarged broadcast typography; original geometry, colors and API unchanged. */
+.player .name{font-family:"Arial Narrow","Roboto Condensed","Liberation Sans Narrow",Arial,sans-serif;font-size:32px;font-weight:600;font-stretch:condensed;line-height:1.12;min-width:0;text-overflow:clip}.player .name-text{display:inline-block;white-space:nowrap;transform-origin:left center}
+.player .point{font-family:"Arial Narrow","Roboto Condensed","Liberation Sans Narrow",Arial,sans-serif;font-stretch:condensed;font-size:38px;line-height:1;letter-spacing:-1px;font-variant-numeric:tabular-nums;font-weight:900}
+@media(max-width:700px){.player .name{font-size:32px}.player .point{font-size:38px}}
+
+/* Dynamic game columns: preserve fixed widths of point and match-score columns. */
+#score .player,#score .labels{grid-template-columns:minmax(0,1fr) 52px repeat(var(--game-count,5),25px) 43px}
+
+/* Rankedin attribution inside the existing header; no change to outer geometry. */
+.head{position:relative}
+.head .court{align-self:flex-end}
+.head .rankedin-credit{position:absolute;top:4px;right:14px;display:flex;align-items:center;gap:3px;font-size:9px;line-height:11px;font-weight:400;color:#b9cde5;white-space:nowrap;pointer-events:none}
+.rankedin-credit img{height:10px;width:auto;max-width:65px;object-fit:contain}
+</style></head><body><div id="wrap"><div class="glass head"><div class="org" id="organizers"></div><div class="rankedin-credit">Powered by <img src="rankedin-logo.png" alt="Rankedin" onerror="this.hidden=true;this.nextElementSibling.hidden=false"><span hidden>Rankedin</span></div><div class="court" id="court">COURT 1</div></div><div class="glass score" id="score"><div class="message">Connecting…</div></div><div class="status" id="status"></div></div>
+<script>
+'use strict';
+const $=id=>document.getElementById(id),params=new URLSearchParams(location.search),slot=params.get('court')||'1',demo=params.get('demo'),CONFIG_INTERVAL=60000;
+let api={apiBaseUrl:'https://live.rankedin.com/api/v1',refreshSeconds:5,courts:{'1':192806}},rankedinId=null,tournament={},sponsorConfig={},sponsorEpoch=Date.now(),lastSignature='',latest=null,lastLive=null,finalUntil=0,finalId=null,pollBusy=false,configReady=false;
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const name=x=>{const p=Array.isArray(x)?x[0]:x;if(!p)return 'PLAYER';const first=String(p.firstName||'').trim(),last=String(p.lastName||'').trim();return (first?Array.from(first)[0]+'. ':'')+last||(first||'PLAYER')};
+const safePath=s=>typeof s==='string'&&!/^\s*(?:https?:|\/\/|data:|javascript:)/i.test(s)&&!s.includes('..')?s:null;
+const entry=x=>typeof x==='string'?{image:x,name:''}:x&&typeof x==='object'?{image:x.image||x.src||'',name:x.name||''}:null;
+function image(path,alt){const src=safePath(path);if(!src)return null;const img=document.createElement('img');img.src=src;img.alt=alt||'';return img}
+async function json(path){
+ const ctl=new AbortController();let timer;
+ try{return await Promise.race([(async()=>{const r=await fetch(path+(path.includes('?')?'&':'?')+'t='+Date.now(),{cache:'no-store',signal:ctl.signal});if(!r.ok)throw Error('HTTP '+r.status);return await r.json()})(),new Promise((_,reject)=>{timer=setTimeout(()=>{ctl.abort();reject(Error('Request timeout'))},10000)})]);}finally{clearTimeout(timer)}
+}
+function applyTournament(){ const host=$('organizers');host.replaceChildren();for(const v of (Array.isArray(tournament.organizers)?tournament.organizers:[]).slice(0,3)){const e=entry(v);const img=e&&image(e.image,e.name||'Organizer');if(img)host.appendChild(img)}}
+async function configs(){try{const c=await json('api-config.json');if(c&&c.courts&&typeof c.courts==='object')api=c}catch(e){console.warn(e)}rankedinId=api.courts?.[slot]==null?null:String(api.courts[slot]);configReady=true;try{tournament=await json('tournament.json');applyTournament()}catch(e){console.warn(e)}}
+
+/* Match format: use explicit Rankedin metadata when available; never infer from score length. */
+function normalizedBestOf(value){
+ if(value===3||value===5)return value;
+ if(typeof value==='string'){
+  const v=value.trim().toLowerCase();
+  if(/^(3|5)$/.test(v))return Number(v);
+  const m=v.match(/best\s*(?:of|-)\s*([35])/);
+  if(m)return Number(m[1]);
+ }
+ return null;
+}
+function matchBestOf(match,details,config,params){
+ const base=match?.base||match||{},state=match?.state||{};
+ const explicit=[base.bestOf,base.bestOfGames,base.numberOfGames,base.matchFormat,base.format,base.rules?.bestOf,base.rules?.bestOfGames,base.settings?.bestOf,base.settings?.bestOfGames,state.bestOf,state.matchFormat,match?.bestOf,match?.matchFormat];
+ for(const candidate of explicit){const n=normalizedBestOf(candidate);if(n)return n}
+ // A global event-level value is only reliable when the event has a single format.
+ for(const candidate of [details?.bestOf,details?.bestOfGames,details?.matchFormat,details?.format]){const n=normalizedBestOf(candidate);if(n)return n}
+ const override=normalizedBestOf(params.get('bestof'));
+ if(override)return override;
+ const courtKey=String(params.get('court')||'1');
+ for(const candidate of [config?.bestOfByCourt?.[courtKey],config?.bestOf]){const n=normalizedBestOf(candidate);if(n)return n}
+ return 5;
+}
+
+function row(player,points,sets,won,serve,other,bestOf=5){const cells=Array.from({length:bestOf},(_,i)=>{const v=sets?.[i],o=other?.[i],victory=v!=null&&o!=null&&Number(v)>Number(o)&&Number(v)>=11&&Number(v)-Number(o)>=2;return `<div class="game${victory?' won':''}">${esc(v??'–')}</div>`}).join('');return `<div class="player${serve?' serving':''}"><div class="name" title="${esc(name(player))}"><span class="name-text">${esc(name(player))}</span></div><div class="point">${esc(points)}</div>${cells}<div class="games">${esc(won)}</div></div>`}
+// Dynamically size the overlay to the longer name; preserve fixed score columns.
+// Use the same font size for both players. Tighten tracking before shrinking below 32px.
+function fitOverlayNames(){
+ const wrap=$('wrap'), names=[...document.querySelectorAll('#score .player .name')];
+ if(!names.length){wrap.style.width='min(400px,94vw)';return}
+ const spans=names.map(el=>el.querySelector('.name-text'));
+ const maxWidth=Math.min(500,Math.max(0,window.innerWidth*.94));
+ const minWidth=Math.min(400,maxWidth);
+ const measure=document.createElement('canvas').getContext('2d');
+ const style=getComputedStyle(names[0]);
+ const family=style.fontFamily,weight=style.fontWeight;
+ const texts=spans.map(el=>el.textContent||'');
+ const widths=(size,tracking)=>texts.map(t=>{
+   measure.font=weight+' '+size+'px '+family;
+   return measure.measureText(t).width+Math.max(0,Array.from(t).length-1)*tracking;
+ });
+ // The first column has variable width. Everything else stays fixed.
+ const score=$('score'), row=names[0].parentElement;
+ const grid=getComputedStyle(row);
+ const fixed=grid.gridTemplateColumns.split(' ').slice(1).reduce((a,v)=>a+parseFloat(v),0);
+ const gap=parseFloat(grid.columnGap)||0;
+ const padding=(parseFloat(getComputedStyle(score).paddingLeft)||0)+(parseFloat(getComputedStyle(score).paddingRight)||0);
+ const border=2;
+ const leftInset=Math.max(...names.map(n=>(parseFloat(getComputedStyle(n).paddingLeft)||0)));
+ const chrome=fixed+((Number(row.style.getPropertyValue("--game-count"))||5)+2)*gap+padding+border+leftInset+4;
+ const ideal=Math.ceil(chrome+Math.max(...widths(32,0)));
+ const target=Math.min(maxWidth,Math.max(minWidth,ideal));
+ wrap.style.width=target+'px';
+ const available=Math.max(1,target-chrome);
+ let size=32,tracking=0;
+ const fits=()=>Math.max(...widths(size,tracking))<=available;
+ while(!fits()&&tracking> -1.5)tracking=Math.max(-1.5,tracking-.15);
+ while(!fits()&&size>24)size=Math.max(24,size-.5);
+ for(let i=0;i<names.length;i++){
+   const el=names[i],span=spans[i];
+   el.style.fontSize=size+'px';
+   span.style.letterSpacing=tracking+'px';
+   // Exceptionally long names: compress glyphs horizontally instead of clipping.
+   const natural=widths(size,tracking)[i];
+   const scale=natural>available?Math.max(.65,available/natural):1;
+   span.style.transform='scaleX('+scale+')';
+ }
+}
+window.addEventListener('resize',()=>{if(document.querySelector('#score .player'))fitOverlayNames()});
+function renderRows(a,b,ap,bp,as,bs,aw,bw,serve,bestOf=5){
+ const labels=Array.from({length:bestOf},(_,i)=>'<div>G'+(i+1)+'</div>').join('');
+ $('score').innerHTML='<div class="labels" style="--game-count:'+bestOf+'"><div>PLAYER</div><div>POINTS</div>'+labels+'<div>GAMES</div></div>'+row(a,ap,as,aw,serve===true,bs,bestOf)+row(b,bp,bs,bw,serve===false,as,bestOf);
+ for(const el of $('score').querySelectorAll('.player'))el.style.setProperty('--game-count',bestOf);
+ fitOverlayNames();
+}
+function label(d,s){const raw=d?.details?.courtName||'CT'+slot,m=String(raw).match(/^(?:CT|COURT)\s*(\d+)$/i);$('court').textContent=(m?'COURT '+m[1]:String(raw).toUpperCase())+(s?' · '+s:'')}
+function draw(d){const live=d.liveMatch,prev=d.previousMatch,next=d.nextMatch,now=Date.now();if(live){const base=live.base||live,st=live.state||live,sc=st.score||{},sets=Array.isArray(sc.detailedResult)?sc.detailedResult:[],current=sets.at(-1)||{};const index=Number(sc.index);const bestOf=matchBestOf(live,d.details,api,params);const game=Number.isFinite(index)?Math.min(bestOf,Math.max(1,index+1)):Math.max(1,sets.length);label(d,'GAME '+game+' · BEST OF '+bestOf);renderRows(base.firstParticipant,base.secondParticipant,current.firstParticipantScore??'–',current.secondParticipantScore??'–',sets.map(x=>x.firstParticipantScore),sets.map(x=>x.secondParticipantScore),sc.firstParticipantScore??0,sc.secondParticipantScore??0,st.serve?.isFirstParticipantServing,bestOf);lastLive=String(base.matchId||'');finalUntil=0;finalId=null;return}if(lastLive&&prev&&String(prev.matchId)===lastLive){finalId=lastLive;finalUntil=now+60000}lastLive=null;if(prev&&String(prev.matchId)===finalId&&now<finalUntil){const sc=prev.score||{},sets=sc.detailedResult||[],bestOf=matchBestOf(prev,d.details,api,params);label(d,'FINAL RESULT');renderRows(prev.firstParticipant,prev.secondParticipant,'–','–',sets.map(x=>x.firstParticipantScore),sets.map(x=>x.secondParticipantScore),sc.firstParticipantScore??'–',sc.secondParticipantScore??'–',null,bestOf);return}if(next){const bestOf=matchBestOf(next,d.details,api,params);label(d,'NEXT MATCH · BEST OF '+bestOf);renderRows(next.firstParticipant,next.secondParticipant,'–','–',[],[],'–','–',null,bestOf);return}label(d,'COURT AVAILABLE');$('score').innerHTML='<div class="message">COURT AVAILABLE</div>';$('wrap').style.width='min(400px,94vw)'}
+const demoData={details:{courtName:'CT1'},liveMatch:{base:{matchId:1001,firstParticipant:[{firstName:'Olivers',lastName:'Felšs'}],secondParticipant:[{firstName:'Kārlis',lastName:'Martinsons'}]},state:{serve:{isFirstParticipantServing:true},score:{index:2,firstParticipantScore:1,secondParticipantScore:1,detailedResult:[{firstParticipantScore:11,secondParticipantScore:7},{firstParticipantScore:8,secondParticipantScore:11},{firstParticipantScore:6,secondParticipantScore:4}]}}},previousMatch:null,nextMatch:null};
+let lastSuccess=0,lastAttempt=0,lastError='',configBusy=false;
+const debugMode=params.get('debug')==='1';
+function status(){const stale=lastSuccess&&Date.now()-lastSuccess>Math.max(15000,(Number(api.refreshSeconds)||5)*3000);$('status').textContent=debugMode?'Last update: '+(lastSuccess?new Date(lastSuccess).toLocaleTimeString():'—')+' | '+(lastError|| (pollBusy?'Loading':'OK')):stale?'Data not updated':lastError?'Connection error':'';}
+function renderLatest(){if(!latest)return;const signature=JSON.stringify([latest,api.bestOf,api.bestOfByCourt,finalUntil>0&&Date.now()>=finalUntil]);if(signature===lastSignature)return;draw(latest);lastSignature=JSON.stringify([latest,api.bestOf,api.bestOfByCourt,finalUntil>0&&Date.now()>=finalUntil]);}
+async function poll(){
+ if(pollBusy||!configReady)return;
+ if(!rankedinId&&!demo){$('score').innerHTML='<div class="message">COURT '+esc(slot)+' — NOT CONFIGURED</div>';return}
+ pollBusy=true;lastAttempt=Date.now();const requestedId=rankedinId;
+ try{let d;if(demo==='live')d=demoData;else if(demo==='next')d={...demoData,liveMatch:null,nextMatch:{firstParticipant:demoData.liveMatch.base.firstParticipant,secondParticipant:demoData.liveMatch.base.secondParticipant}};else{const base=String(api.apiBaseUrl||'https://live.rankedin.com/api/v1').replace(/\/+$/,'');d=await json(base+'/court/'+encodeURIComponent(requestedId)+'/scoreboard')}
+ if(requestedId!==rankedinId)return;
+ if(!d||typeof d!=='object'||!('liveMatch'in d))throw Error('Unexpected API format');latest=d;renderLatest();lastSuccess=Date.now();lastError='';
+ }catch(e){lastError=e.message;console.warn('Overlay:',e);if(!latest)$('score').innerHTML='<div class="message">WAITING FOR CONNECTION</div>'}finally{pollBusy=false;status()}
+}
+async function refreshConfigs(){if(configBusy)return;configBusy=true;const old=rankedinId;try{await configs();if(old!==rankedinId){latest=null;lastSignature='';lastLive=null;finalUntil=0;finalId=null;lastSuccess=0;lastAttempt=0;}}finally{configBusy=false}}
+function tick(){const interval=Math.max(2,Number(api.refreshSeconds)||5)*1000;if(Date.now()-lastAttempt>=interval)poll();try{renderLatest()}catch(e){console.warn('Render:',e)}status()}
+setInterval(tick,1000);setInterval(refreshConfigs,CONFIG_INTERVAL);refreshConfigs().then(tick);window.addEventListener('online',()=>{lastAttempt=0;tick()});document.addEventListener('visibilitychange',()=>{if(!document.hidden){lastAttempt=0;tick()}});
+</script></body></html>
